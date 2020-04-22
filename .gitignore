@@ -1,0 +1,10 @@
+bin/
+lib/
+share/
+
+**/__pycache__/**
+*.pyc
+**/.DS_Store
+pyvenv.cfg
+
+*.java
