@@ -2,9 +2,10 @@ bin/
 lib/
 share/
 
-**/__pycache__/**
-*.pyc
-**/.DS_Store
 pyvenv.cfg
 
-*.java
+**/*.class
+**/.DS_Store
+**/__pycache__/**
+*.pyc
+
