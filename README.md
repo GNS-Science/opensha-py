@@ -16,7 +16,7 @@ java -cp share/py4j/py4j0.10.9.jar src/java/AdditionApplication.java
 ### 1.2 Run it (background)... 
 
 ```
-java -cp share/py4j/py4j0.10.9.jar src/java/AdditionApplication.java &
+java -cp share/py4j/py4j0.10.9.jar src/java/AdditionApplication &
 ```
 
 ### 1.3 call it from python
@@ -33,7 +33,7 @@ and wrapping it with a py4j gateway. Now, we can do this...
 
 
 ```
-!python
+#!python
 from py4j.java_gateway import JavaGateway
 
 gateway = JavaGateway()
