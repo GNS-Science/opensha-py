@@ -1,6 +1,9 @@
-//package org.opensha.sha.examples;
+package org.opensha.py;
 
 import java.awt.geom.Point2D;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.HashMap;
 
 import org.opensha.commons.data.Site;
 import org.opensha.commons.data.TimeSpan;
@@ -20,12 +23,13 @@ import org.opensha.sha.imr.param.IntensityMeasureParams.SA_Param;
 import org.opensha.sha.imr.param.SiteParams.Vs30_Param;
 
 import py4j.GatewayServer;
+import org.opensha.py.HazardCalculatorResult;
 
 /**
  * Example main class showing how to set up the various required objects, change parameter values,
  * and compute a hazard curve.
  * 
- * @author kevin; chrisbc
+ * @author chrisbc
  *
  */
 public class HazardCurveCalcGateway {
@@ -47,7 +51,10 @@ public class HazardCurveCalcGateway {
     	this.timespan = timespan;
     }
 
-	public void execute(Float lon, Float lat) {
+	public HazardCalculatorResult execute(Float lon, Float lat) {
+		// result object
+        HazardCalculatorResult result = new HazardCalculatorResult();
+
 		// this is the location where we are going to calculate a hazard curve
 		Location loc = new Location(lon, lat);
 		
@@ -60,11 +67,13 @@ public class HazardCurveCalcGateway {
 		ERF erf = new MeanUCERF2();
 		
 		// lets see what adjustable parameters this ERF has:
-		System.out.println(erf.getName()+" adjustable parameters and current values:");
+		// System.out.println(erf.getName()+" adjustable parameters and current values:");
+		result.infoList.add(erf.getName()+" adjustable parameters and current values:");
 		for (Parameter<?> param : erf.getAdjustableParameterList()) {
 			String name = param.getName();
 			Object value = param.getValue();
-			System.out.println("\t"+name+": "+value);
+			// System.out.println("\t"+name+": "+value);
+			result.infoList.add("\t"+name+": "+value);
 		}
 		
 		// lets change a parameter, in this case we'll change the probability model to Poisson.
@@ -91,11 +100,13 @@ public class HazardCurveCalcGateway {
 		
 		// something that can be a little tricky here is that the GMPE has 'site' parmeters, but it gets their values
 		// from the site object. so first, we need to set up those parameters in the site
-		System.out.println(gmpe.getShortName()+" site paramters and default values:");
+		// System.out.println(gmpe.getShortName()+" site paramters and default values:");
+		result.siteParamList.add(gmpe.getShortName()+" site paramters and default values:");
 		for (Parameter<?> param : gmpe.getSiteParams()) {
 			String name = param.getName();
 			Object value = param.getValue();
-			System.out.println("\t"+name+": "+value);
+			// System.out.println("\t"+name+": "+value);
+			result.siteParamList.add("\t"+name+": "+value);
 			// add that parameter to the site. if you are only ever going to have one site in memory you can
 			// remove the clone() call, but it's safer to give the site it's own copy so that you can change values
 			// for each site without affecting anything else
@@ -135,19 +146,35 @@ public class HazardCurveCalcGateway {
 		// this will populate the hazrd curve object, filling in the y-values with exceedance probabilities
 		curveCalc.getHazardCurve(hazardCurve, site, gmpe, erf);
 		System.out.println("DONE calculating hazard curve");
-		
-		System.out.println("Hazard curve (with log x-values):\n"+hazardCurve);
+
+		var it = hazardCurve.iterator();
+		while (it.hasNext()) 
+            // System.out.print(it.next() + " ");
+        	result.pgaCurveList.add(it.next());
+
+		// System.out.println("Hazard curve (with log x-values):\n"+hazardCurve);
 		
 		// now lets calculate spectral acceleration
+		// hazard curve calculations are done in natural log space though, so we need to convert these
+		// x-values to log, and create the object which will store our hazard curve
+		DiscretizedFunc hazardCurveSA = new ArbitrarilyDiscretizedFunc();
+		for (Point2D pt : linearXVals)
+			hazardCurveSA.set(Math.log(pt.getX()), 0d); // y-value doesn't matter here yet
+
 		gmpe.setIntensityMeasure(SA_Param.NAME);
 		// need to set the period as well, which is stored within the IMT as a sub-parameter.
 		// this is the simplest way:
 		SA_Param.setPeriodInSA_Param(gmpe.getIntensityMeasure(), 1d); // 1-second
 		
 		// can re-use the same x-values if we want:
-		curveCalc.getHazardCurve(hazardCurve, site, gmpe, erf);
+		curveCalc.getHazardCurve(hazardCurveSA, site, gmpe, erf);
 		
-		System.out.println("SA hazard curve:\n"+hazardCurve);
+		// System.out.println("SA hazard curve:\n"+hazardCurve);
+		it = hazardCurveSA.iterator();
+		while (it.hasNext()) 
+            // System.out.print(it.next() + " ");
+        	result.saCurveList.add(it.next());
+		return result;
 	}
 
 }

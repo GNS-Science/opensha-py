@@ -39,15 +39,16 @@ The class path includes:
 
 - the 'fat' opensha Jar file
 - the py4j Jar
- 
+- opensha-py/src/java 
 ```bash
-javac -cp opensha-core/build/libs/opensha-core-all.jar:opensha-py/share/py4j/py4j0.10.9.jar:. opensha-py/src/java/HazardCurveCalcGateway.java 
+export OPENSHA_PY_CLASSPATH=opensha-core/build/libs/opensha-core-all.jar:opensha-py/share/py4j/py4j0.10.9.jar:opensha-py/src/java:.
+javac -cp $OPENSHA_PY_CLASSPATH opensha-py/src/java/org/opensha/py/HazardCurveCalcGateway.java 
 ```
 
 ## 3.0 Run the Java gateway server (background)... 
 
 ```bash
-java -cp opensha-core/build/libs/opensha-core-all.jar:opensha-py/share/py4j/py4j0.10.9.jar:. opensha-py/src/java/HazardCurveCalcGateway.java src/java/HazardCurveCalcGateway
+java -cp $OPENSHA_PY_CLASSPATH org.opensha.py.HazardCurveCalcGateway
 ```
 
 ## 4.0 Call HazardCurveCalc from python client
